@@ -7,6 +7,8 @@ import traverse, { NodePath } from "@babel/traverse";
 import generate_ from "@babel/generator";
 import * as t from "@babel/types";
 
+import CodeSnippetGenerator from "./codeSnippet";
+
 const code: string = readFileSync("../out/captcha.js", "utf8");
 
 const ast = parseSync(code);
@@ -21,21 +23,41 @@ traverse(ast, {
 
     if (!t.isTryStatement(body)) return;
 
+    let binding;
     //convert to code and print out
+
+    const sandbox = new CodeSnippetGenerator();
     if (!path.node.init) {
       //set it to code above
-      const variable = path.getPrevSibling().node;
+      const variable = path.getPrevSibling().node as t.VariableDeclaration;
+      //set the binding for function variable is declared with
 
-      const code = generate_(variable).code;
+      //must be callexpession
+      if (!t.isCallExpression(variable.declarations[0].init)) return;
 
-      codeToEval += code + "\n\n";
+      const callee = variable.declarations[0].init.callee;
+      if (!t.isIdentifier(callee)) return;
+
+      //get the variable declaration and set the binding to the function
+
+      binding = path.scope.getBinding(callee.name).path;
+
+      sandbox.generateCode(binding.node); // generate_(path.node).code;
+      sandbox.generateCode(variable);
     }
-    const code = generate_(path.node).code;
-    codeToEval += code + "\n\n";
+    sandbox.generateCode(path.node); //generate code is generate_(path.node).code;
+
+    //now run sandbox.
+
+    sandbox.executeCodeSnippets();
+    //get the binding of the variable
   },
 });
 
-console.log(codeToEval);
+function generateCode(variable: t.VariableDeclaration): string {
+  const variableDefinition = generate_(variable).code;
+  return variableDefinition + "\n\n";
+}
 
 // traverse_(ast, {
 //   CallExpression(path) {

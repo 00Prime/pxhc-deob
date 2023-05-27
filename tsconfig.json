@@ -7,7 +7,7 @@
     "module": "CommonJS",
     "removeComments": true,
     "target": "ESNext",
-    "noEmitOnError": true,
+    // "noEmitOnError": true,
     "rootDir": "./src",
     "outDir": "./build/",
     "allowJs": false
