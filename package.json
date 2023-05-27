@@ -3,11 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "type": "commonjs",
   "scripts": {
-    "build": "node build/index.js",
-    "start:tsc": "tsc -w",
-    "start:js": "nodemon build/index.js",
-    "start": "concurrently npm:start:*"
+    "start": "node build/index.js"
   },
   "keywords": [],
   "author": "",

@@ -3,7 +3,7 @@ import { appendFileSync, readFileSync, writeFileSync } from "fs";
 import { VM } from "vm2";
 
 import { parseSync } from "@babel/core";
-import traverse_, { NodePath } from "@babel/traverse";
+import traverse, { NodePath } from "@babel/traverse";
 import generate_ from "@babel/generator";
 import * as t from "@babel/types";
 
@@ -15,7 +15,7 @@ let arrayFunctionVisted: string[] = [];
 
 let codeToEval: string = "";
 
-traverse_(ast, {
+traverse(ast, {
   ForStatement(path: NodePath<t.ForStatement>) {
     const { body } = path.node;
 
@@ -118,7 +118,7 @@ function evalCode(funcPath: NodePath) {
   // console.log(arrayFuncCode);
 }
 
-traverse_(ast, {
+traverse(ast, {
   //function expression or function declaration or unary expression
   FunctionExpression(path) {
     //
