@@ -1,0 +1,17 @@
+{
+    "compilerOptions": {
+        "esModuleInterop": true,
+        "moduleResolution": "Node",
+        "sourceMap": true,
+        "noImplicitAny": false,
+        "module": "CommonJS",
+        "target": "ESNext",
+        "noEmitOnError": true,
+        "rootDir": "./src",
+        "outDir": "./build/",
+        "allowJs": false
+    },
+    "files": [
+        "src/index.ts"
+    ]
+}
