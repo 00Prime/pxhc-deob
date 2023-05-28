@@ -1,12 +1,9 @@
 import { appendFileSync, readFileSync, writeFileSync } from "fs";
-
-import { VM } from "vm2";
-
 import { parseSync } from "@babel/core";
 import traverse, { NodePath } from "@babel/traverse";
 import generate_ from "@babel/generator";
 import * as t from "@babel/types";
-
+import { VM } from "vm2";
 import CodeSnippetGenerator from "./codeSnippet";
 
 const code: string = readFileSync("../out/captcha.js", "utf8");
@@ -15,7 +12,7 @@ const ast = parseSync(code);
 
 let arrayFunctionVisted: string[] = [];
 
-let codeToEval: string = "";
+let sandbox: CodeSnippetGenerator = new CodeSnippetGenerator();
 
 traverse(ast, {
   ForStatement(path: NodePath<t.ForStatement>) {
@@ -25,8 +22,6 @@ traverse(ast, {
 
     let binding;
     //convert to code and print out
-
-    const sandbox = new CodeSnippetGenerator();
     if (!path.node.init) {
       //set it to code above
       const variable = path.getPrevSibling().node as t.VariableDeclaration;
@@ -45,19 +40,9 @@ traverse(ast, {
       sandbox.generateCode(binding.node); // generate_(path.node).code;
       sandbox.generateCode(variable);
     }
-    sandbox.generateCode(path.node); //generate code is generate_(path.node).code;
-
-    //now run sandbox.
-
-    sandbox.executeCodeSnippets();
-    //get the binding of the variable
+    sandbox.generateCode(path.node);
   },
 });
-
-function generateCode(variable: t.VariableDeclaration): string {
-  const variableDefinition = generate_(variable).code;
-  return variableDefinition + "\n\n";
-}
 
 // traverse_(ast, {
 //   CallExpression(path) {
@@ -139,12 +124,3 @@ function evalCode(funcPath: NodePath) {
 
   // console.log(arrayFuncCode);
 }
-
-traverse(ast, {
-  //function expression or function declaration or unary expression
-  FunctionExpression(path) {
-    //
-  },
-  FunctionDeclaration(path) {},
-  UnaryExpression(path) {},
-});
