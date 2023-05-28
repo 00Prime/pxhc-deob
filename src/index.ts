@@ -38,8 +38,21 @@ traverse(ast, {
 
       sandbox.generateCode(binding.node); // generate_(path.node).code;
       sandbox.generateCode(variable); //add the missing variable declaration to sandbox
+    } else {
+      path.traverse({
+        CallExpression(path: NodePath<t.CallExpression>) {
+          const { arguments: args, callee } = path.node;
+
+          if (!t.isIdentifier(callee)) return;
+
+          const binding = path.scope.getBinding(callee.name).path;
+          sandbox.generateCode(binding.node);
+          path.stop();
+        },
+      });
     }
 
+    //
     //get the binding function called in the for loop traverse
     path.traverse({
       IfStatement(path: NodePath<t.IfStatement>) {
@@ -62,6 +75,8 @@ traverse(ast, {
     sandbox.generateCode(path.node);
   },
 });
+
+debugger;
 // traverse_(ast, {
 //   CallExpression(path) {
 //     const {
