@@ -3,13 +3,13 @@ import { parseSync } from "@babel/core";
 import traverse, { NodePath } from "@babel/traverse";
 import generate_ from "@babel/generator";
 import * as t from "@babel/types";
-import CodeSnippetGenerator from "./codeSnippet";
+import evaluator from "./evaluator";
 
 const code: string = readFileSync("../out/captcha.js", "utf8");
 
 const ast = parseSync(code);
 
-let sandbox: CodeSnippetGenerator = new CodeSnippetGenerator();
+let sandbox: evaluator = new evaluator();
 
 traverse(ast, {
   ForStatement(path: NodePath<t.ForStatement>) {
@@ -18,7 +18,6 @@ traverse(ast, {
     if (!t.isTryStatement(body)) return;
     if (body.handler.body.body.length == 0) return;
 
-    let binding;
     //for(;;) some obfuscated loops have init before the for loop
     if (!path.node.init) {
       const variable = path.getPrevSibling().node as t.VariableDeclaration; //set it to code above
@@ -32,10 +31,12 @@ traverse(ast, {
 
       //get the variable declaration and set the binding to the function
 
-      binding = path.scope.getBinding(callee.name).path;
+      let binding = path.scope.getBinding(callee.name).path;
 
       sandbox.generateCode(binding.node); // generate_(path.node).code;
       sandbox.generateCode(variable); //add the missing variable declaration to sandbox
+
+      binding.remove();
     } else {
       path.traverse({
         CallExpression(path: NodePath<t.CallExpression>) {
@@ -70,7 +71,9 @@ traverse(ast, {
     });
 
     //Thats forloop
+
     sandbox.generateCode(path.node);
+    path.remove();
   },
 });
 sandbox.execute().then(() => {
@@ -119,4 +122,55 @@ traverse(ast, {
   },
 });
 
+traverse(ast, {
+  CallExpression(path) {
+    const { callee, arguments: args } = path.node;
+    if (
+      args.length > 1 ||
+      !t.isStringLiteral(args[0]) ||
+      !t.isIdentifier(callee) ||
+      args[0].value == ""
+    )
+      return;
+    const binding = path.scope.getBinding(callee.name);
+
+    if (args[0].value == "FhQFWCA9ARULAVsx") {
+      debugger;
+    }
+
+    if (!binding) return; // built-in functions
+
+    path.replaceWith(t.stringLiteral(decode(args[0].value)));
+  },
+});
+
+traverse(ast, {
+  FunctionDeclaration(path: NodePath<t.FunctionDeclaration>) {
+    const { node, scope } = path;
+    const { constant, referenced } = scope.getBinding(node.id.name);
+    // If the variable is constant and never referenced, remove it.
+    if (constant && !referenced) {
+      path.remove();
+    }
+  },
+});
+
+function decode(str) {
+  let cache = {};
+  let cached = cache[str];
+  if (cached) return cached;
+  let decoded = "";
+  // Convert the string from base64 to ascii
+  let converted = atob(str);
+  // For each character in the string, XOR it with a character from "pfd5Exm"
+  for (let i = 0; i < converted.length; ++i) {
+    let xor = "pfd5Exm".charCodeAt(i % 7);
+    decoded += String.fromCharCode(xor ^ converted.charCodeAt(i));
+  }
+  cache[str] = decoded;
+  return decoded;
+}
+function atob(str) {
+  return Buffer.from(str, "base64").toString("ascii");
+}
 writeFileSync("../out/out.js", generate_(ast).code);
