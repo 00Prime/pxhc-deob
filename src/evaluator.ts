@@ -10,9 +10,11 @@ export class CodeSnippetGenerator {
     this.sandbox = new VM();
   }
 
-  generateCode(node: t.Node): void {
+  generateCode(node: t.Node): string {
     const code = generate(node).code;
+
     this.codeSnippets.push(code + "\n\n");
+    return code;
   }
 
   execute(): Promise<void> {
