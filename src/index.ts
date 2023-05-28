@@ -21,12 +21,11 @@ traverse(ast, {
     if (!t.isTryStatement(body)) return;
 
     let binding;
-    //convert to code and print out
+    //for(;;) some obfuscated loops have init before the for loop
     if (!path.node.init) {
-      //set it to code above
-      const variable = path.getPrevSibling().node as t.VariableDeclaration;
-      //set the binding for function variable is declared with
+      const variable = path.getPrevSibling().node as t.VariableDeclaration; //set it to code above
 
+      //set the binding for function variable is declared with
       //must be callexpession
       if (!t.isCallExpression(variable.declarations[0].init)) return;
 
@@ -38,12 +37,31 @@ traverse(ast, {
       binding = path.scope.getBinding(callee.name).path;
 
       sandbox.generateCode(binding.node); // generate_(path.node).code;
-      sandbox.generateCode(variable);
+      sandbox.generateCode(variable); //add the missing variable declaration to sandbox
     }
+
+    //get the binding function called in the for loop traverse
+    path.traverse({
+      IfStatement(path: NodePath<t.IfStatement>) {
+        path.traverse({
+          CallExpression(path) {
+            const { arguments: args, callee } = path.node;
+
+            if (args.length !== 2) return;
+            if (!t.isIdentifier(callee)) return;
+
+            const binding = path.scope.getBinding(callee.name).path;
+            sandbox.generateCode(binding.node);
+            path.stop();
+          },
+        });
+      },
+    });
+
+    //Thats forloop
     sandbox.generateCode(path.node);
   },
 });
-
 // traverse_(ast, {
 //   CallExpression(path) {
 //     const {
@@ -80,47 +98,3 @@ traverse(ast, {
 //     }
 //   }
 // });
-
-function evalCode(funcPath: NodePath) {
-  const code = generate_(funcPath.node).code;
-
-  let calleeName;
-  funcPath.traverse({
-    CallExpression(path) {
-      const { callee } = path.node;
-      if (!t.isIdentifier(callee)) return;
-      calleeName = callee.name;
-      path.stop();
-    },
-  });
-
-  const arrayFunction = funcPath.scope.getBinding(calleeName);
-  const arrayFuncCode = generate_(arrayFunction.path.node).code;
-
-  const findParentFunctionExpression: (path: NodePath) => NodePath = (path) => {
-    if (path.isUnaryExpression()) {
-      return path;
-    }
-    if (
-      path &&
-      (!path.isFunctionExpression() || !path.isFunctionDeclaration())
-    ) {
-      return findParentFunctionExpression(path.parentPath);
-    }
-    return path;
-  };
-
-  const unaryExpression = findParentFunctionExpression(
-    funcPath.scope.getBinding(calleeName).referencePaths[1]
-  );
-
-  const unaryExpressionCode = generate_(unaryExpression.node).code;
-
-  if (!arrayFunctionVisted.includes(calleeName)) {
-    appendFileSync("../out/evalCode.js", unaryExpressionCode + "\n\n");
-  }
-  arrayFunctionVisted.push(calleeName);
-  //there is also a function that is modifying arrayFuncCode get the functionexpress which references calleeName
-
-  // console.log(arrayFuncCode);
-}
