@@ -3,14 +3,11 @@ import { parseSync } from "@babel/core";
 import traverse, { NodePath } from "@babel/traverse";
 import generate_ from "@babel/generator";
 import * as t from "@babel/types";
-import { VM } from "vm2";
 import CodeSnippetGenerator from "./codeSnippet";
 
 const code: string = readFileSync("../out/captcha.js", "utf8");
 
 const ast = parseSync(code);
-
-let arrayFunctionVisted: string[] = [];
 
 let sandbox: CodeSnippetGenerator = new CodeSnippetGenerator();
 
@@ -76,41 +73,50 @@ traverse(ast, {
     sandbox.generateCode(path.node);
   },
 });
+sandbox.execute().then(() => {
+  // console.log(sandbox.evalCode("hv(478, -237)"));
+});
+traverse(ast, {
+  CallExpression(path) {
+    const { callee, arguments: args } = path.node;
 
-debugger;
-// traverse_(ast, {
-//   CallExpression(path) {
-//     const {
-//       callee,
-//       arguments: args,
-//     } = path.node;
+    if (
+      t.isIdentifier(callee) &&
+      args.length == 2 &&
+      (t.isUnaryExpression(args[0]) || t.isNumericLiteral(args[0])) &&
+      (t.isUnaryExpression(args[1]) || t.isNumericLiteral(args[1]))
+    ) {
+      const binding = path.scope.getBinding(callee.name);
+      if (!binding) return; // built-in functions
+      const funcPath = binding.path;
 
-//     if (t.isIdentifier(callee) && args.length == 2 && (t.isUnaryExpression(args[0]) || t.isNumericLiteral(args[0])) && (t.isUnaryExpression(args[1]) || t.isNumericLiteral(args[1]))) {
+      if (!t.isFunctionDeclaration(funcPath.node)) return;
 
-//       const binding = path.scope.getBinding(callee.name);
-//       if (!binding) return; // built-in functions
-//       const funcPath = binding.path;
+      if (funcPath.node.body.body.length !== 2) {
+        console.log("left out a function ", funcPath.node.id.name);
+        // debugger;
+        return;
+      }
 
-//       if (!t.isFunctionDeclaration(funcPath.node)) return;
+      const offsets: number[] = args.map((arg: t.Expression) => {
+        if (t.isUnaryExpression(arg) && arg.operator === "-") {
+          return -(arg.argument as t.NumericLiteral).value;
+        }
+        if (t.isNumericLiteral(arg)) {
+          return (arg as t.NumericLiteral).value;
+        }
+        throw new Error("offset must be a number");
+      });
 
-//       if (funcPath.node.body.body.length !== 2) {
-//         // console.log('left out a function ', funcPath.node.id.name);
-//         // debugger;
-//         return;
-//       }
+      const output = sandbox.evalCode(
+        `${funcPath.node.id.name}(${offsets.join(",")})`
+      );
 
-//       const offsets: number[] = args.map((arg: t.Expression) => {
-//         if (t.isUnaryExpression(arg) && arg.operator === '-') {
-//           return -(arg.argument as t.NumericLiteral).value;
-//         }
-//         if (t.isNumericLiteral(arg)) {
-//           return (arg as t.NumericLiteral).value;
-//         }
-//         throw new Error('offset must be a number');
-//       });
+      path.replaceWith(t.stringLiteral(output));
 
-//       evalCode(funcPath);
+      // evalCode(funcPath);
+    }
+  },
+});
 
-//     }
-//   }
-// });
+writeFileSync("../out/out.js", generate_(ast).code);
