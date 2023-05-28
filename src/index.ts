@@ -19,6 +19,7 @@ traverse(ast, {
     const { body } = path.node;
 
     if (!t.isTryStatement(body)) return;
+    if (body.handler.body.body.length == 0) return;
 
     let binding;
     //for(;;) some obfuscated loops have init before the for loop
