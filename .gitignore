@@ -41,7 +41,7 @@ build/Release
 # Dependency directories
 node_modules/
 jspm_packages/
-
+bundles/
 # Snowpack dependency directory (https://snowpack.dev/)
 web_modules/
 
@@ -53,6 +53,7 @@ build/
 
 # Optional npm cache directory
 .npm
+
 
 # Optional eslint cache
 .eslintcache
@@ -132,3 +133,5 @@ dist
 .yarn/install-state.gz
 .pnp.*
 tsconfig.json
+src/resolveIf.ts
+px1132.js
