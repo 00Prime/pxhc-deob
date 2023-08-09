@@ -244,9 +244,9 @@ function decode(str) {
   let decoded = "";
   // Convert the string from base64 to ascii
   let converted = atob(str);
-  // For each character in the string, XOR it with a character from "pfd5Exm"
+  // For each character in the string, XOR it with a character from "j6yKtVh"
   for (let i = 0; i < converted.length; ++i) {
-    let xor = "pfd5Exm".charCodeAt(i % 7);
+    let xor = "j6yKtVh".charCodeAt(i % 7);
     decoded += String.fromCharCode(xor ^ converted.charCodeAt(i));
   }
   cache[str] = decoded;

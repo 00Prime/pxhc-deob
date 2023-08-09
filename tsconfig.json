@@ -12,5 +12,5 @@
     "outDir": "./build/",
     "allowJs": false
   },
-  "files": ["src/index.ts", "src/cursor.ts", "src/resolveIf.ts"]
+  "files": ["src/index.ts", "src/cursor.ts"]
 }
