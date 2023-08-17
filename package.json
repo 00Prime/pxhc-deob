@@ -22,7 +22,7 @@
     "@babel/traverse": "^7.21.5",
     "@babel/types": "^7.21.5",
     "axios": "^1.4.0",
-    "ghost-cursor": "^1.1.18",
+    "ghost-cursor": "^1.1.19",
     "puppeteer": "^20.4.0",
     "restringer": "^1.7.0",
     "ts-node": "^10.9.1",
