@@ -7,7 +7,7 @@ import evaluator from "./evaluator";
 import axios from 'axios';
 
 
-const fetchNew = false;
+const fetchNew = true;
 async function fetchCodeFromURL(url: string): Promise<string> {
   try {
     const response = await axios.get(url);
@@ -379,7 +379,8 @@ function handleReplacement(
       );
     }
   } else {
-    console.error('Unexpected type for property or value');
+    //Not replacing for this yet majority of cases are handled
+    // console.error('Unexpected type for property or value');
   }
 }
 function decode(str: string) {
