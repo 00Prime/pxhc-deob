@@ -333,7 +333,7 @@ function processCode(code: string) {
     }
   })
 
-  writeFileSync("../out/stripped.js", generate_(ast).code);
+  writeFileSync("./out/stripped.js", generate_(ast).code);
 }
 
 
@@ -390,7 +390,7 @@ function decode(str: string) {
   let decoded = "";
   let converted = atob(str);
   for (let i = 0; i < converted.length; ++i) {
-    let xor = "j6yKtVh".charCodeAt(i % 7);
+    let xor = "p3OZTZ5".charCodeAt(i % 7);
     decoded += String.fromCharCode(xor ^ converted.charCodeAt(i));
   }
   cache[str] = decoded;
